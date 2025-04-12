@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
-from fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP
 
 from mcp_notebooks.models.schema import (
     StartKernelResponse,
@@ -11,14 +11,14 @@ from mcp_notebooks.models.schema import (
 from mcp_notebooks.core.manager import SessionManager
 from mcp_notebooks.app.exception_handler import register_exception_handlers
 
-mcp = FastMCP("mcp_notebooks")
+mcp = FastMCP("mcp_notebooks", dependencies=["jupyterlab", "fastapi"])
 app = FastAPI()
 register_exception_handlers(app)
 session_manager = SessionManager()
 
 
-@mcp.tool("start", description="Start a new Jupyter kernel session")
 @app.post("/start", response_model=StartKernelResponse)
+@mcp.tool("start", description="Start a new Jupyter kernel session")
 def start_kernel() -> StartKernelResponse:
     """
     Start a new Jupyter kernel session.
@@ -31,8 +31,8 @@ def start_kernel() -> StartKernelResponse:
     return StartKernelResponse(session_id=session_id, message="success")
 
 
-@mcp.tool("execute", description="Execute code in a Jupyter kernel session")
 @app.post("/execute", response_model=ExecuteResponse)
+@mcp.tool("execute", description="Execute code in a Jupyter kernel session")
 def execute_code(snippet: CodeSnippet) -> ExecuteResponse:
     """
     Execute a code snippet in the specified kernel session.
@@ -52,8 +52,8 @@ def execute_code(snippet: CodeSnippet) -> ExecuteResponse:
     )
 
 
-@mcp.tool("shutdown", description="Shut down a Jupyter kernel session")
 @app.post("/shutdown/{session_id}")
+@mcp.tool("shutdown", description="Shut down a Jupyter kernel session")
 def shutdown_kernel(session_id: str) -> ShutdownResponse:
     """
     Shut down an active kernel session and return its notebook contents.
