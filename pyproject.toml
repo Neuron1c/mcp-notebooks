@@ -1,0 +1,25 @@
+[project]
+name = "mcp-notebooks"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Ian Weber",email = "ian@spatialedge.co.za"}
+]
+readme = "README.md"
+requires-python = "<4.0,>=3.10"
+dependencies = [
+    "jupyterlab (>=4.4.0,<5.0.0)",
+    "fastapi[standard] (>=0.115.12,<0.116.0)",
+    "fastmcp (>=2.0.0,<3.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "mcp_notebooks", from = "src"}]
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
