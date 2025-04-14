@@ -27,6 +27,12 @@ class KernelSession:
         """
         return self.km.kernel_id
 
+    def get_notebook(self) -> str:
+        """
+        Get the notebook history as a JSON string.
+        """
+        return json.dumps(self.nb_hist, indent=2)
+
     def stop(self) -> str:
         """
         Shut down the kernel session and return the accumulated notebook (as a JSON string).

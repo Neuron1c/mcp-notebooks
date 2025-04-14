@@ -7,8 +7,9 @@ from mcp_notebooks.models.schema import (
     CodeSnippet,
     ExecuteResponse,
     ShutdownResponse,
+    GetNotebookResponse,
 )
-from mcp_notebooks.core.manager import SessionManager
+from mcp_notebooks.core.manager import SessionManager, SessionNotFoundError
 from mcp_notebooks.app.exception_handler import register_exception_handlers
 
 mcp = FastMCP("mcp_notebooks", dependencies=["jupyterlab", "fastapi"])
@@ -52,6 +53,28 @@ def execute_code(snippet: CodeSnippet) -> ExecuteResponse:
     )
 
 
+@app.post("/get_notebook/{session_id}")
+@mcp.tool(
+    "get_notebook",
+    description="Get notebook contents from a Jupyter kernel session",
+)
+def get_notebook(session_id: str) -> GetNotebookResponse:
+    """
+    Shut down an active kernel session and return its notebook contents.
+
+    Args:
+        session_id: The ID of the kernel session get the notebook from.
+
+    Returns:
+        A dictionary containing the notebook contents accumulated during the session.
+    """
+
+    session = session_manager.get_session(session_id)
+    notebook = session.get_notebook()
+
+    return GetNotebookResponse(notebook=notebook)
+
+
 @app.post("/shutdown/{session_id}")
 @mcp.tool("shutdown", description="Shut down a Jupyter kernel session")
 def shutdown_kernel(session_id: str) -> ShutdownResponse:
@@ -70,6 +93,28 @@ def shutdown_kernel(session_id: str) -> ShutdownResponse:
         message="success",
         notebook=output,
     )
+
+
+@app.post("/notebook-running/{session_id}")
+@mcp.resource(
+    "notebook-running://{session_id}",
+    description="Check if a Jupyter kernel session is running",
+)
+def notebook_running(session_id: str) -> bool:
+    """
+    Show whether a notebook session is still running.
+
+    Args:
+        session_id: The ID of the kernel session get the notebook from.
+
+    Returns:
+        A dictionary containing the notebook contents accumulated during the session.
+    """
+    try:
+        session_manager.get_session(session_id)
+        return True
+    except SessionNotFoundError:
+        return False
 
 
 @app.get("/")

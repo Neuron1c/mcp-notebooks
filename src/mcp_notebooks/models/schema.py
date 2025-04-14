@@ -47,6 +47,13 @@ class ExecuteResponse(BaseModel):
     )
 
 
+class GetNotebookResponse(BaseModel):
+    notebook: str = Field(
+        ...,
+        description="Notebook code as a string.",
+    )
+
+
 class ShutdownResponse(BaseModel):
     message: str = Field(
         ...,

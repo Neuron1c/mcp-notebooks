@@ -4,4 +4,4 @@ if __name__ == "__main__":
     import dotenv
 
     dotenv.load_dotenv()
-    mcp.run("stdio")
+    mcp.run("sse")
