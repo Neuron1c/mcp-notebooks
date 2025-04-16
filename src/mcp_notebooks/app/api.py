@@ -1,7 +1,8 @@
-from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 from mcp.server.fastmcp import FastMCP
-
 from mcp_notebooks.models.schema import (
     StartKernelResponse,
     CodeSnippet,
@@ -10,17 +11,35 @@ from mcp_notebooks.models.schema import (
     GetNotebookResponse,
 )
 from mcp_notebooks.core.manager import SessionManager, SessionNotFoundError
-from mcp_notebooks.app.exception_handler import register_exception_handlers
 
-mcp = FastMCP("mcp_notebooks", dependencies=["jupyterlab", "fastapi"])
-app = FastAPI()
-register_exception_handlers(app)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 session_manager = SessionManager()
 
 
-@app.post("/start", response_model=StartKernelResponse)
+@asynccontextmanager
+async def app_lifespan(server: FastMCP) -> AsyncIterator[str]:
+    """Manage application lifecycle with type-safe context"""
+    # Initialize on startup
+    task = None
+    try:
+        task = asyncio.create_task(session_manager.cleanup())
+        yield ""
+    finally:
+        logger.info("Cleaning up sessions...")
+        if task is not None:
+            task.cancel()
+
+        await session_manager.cleanup(force=True)
+
+
+mcp = FastMCP(
+    "mcp_notebooks", dependencies=["jupyterlab", "fastapi"], lifespan=app_lifespan
+)
+
+
 @mcp.tool("start", description="Start a new Jupyter kernel session")
-def start_kernel() -> StartKernelResponse:
+async def start_kernel() -> StartKernelResponse:
     """
     Start a new Jupyter kernel session.
 
@@ -32,9 +51,8 @@ def start_kernel() -> StartKernelResponse:
     return StartKernelResponse(session_id=session_id, message="success")
 
 
-@app.post("/execute", response_model=ExecuteResponse)
 @mcp.tool("execute", description="Execute code in a Jupyter kernel session")
-def execute_code(snippet: CodeSnippet) -> ExecuteResponse:
+async def execute_code(snippet: CodeSnippet) -> ExecuteResponse:
     """
     Execute a code snippet in the specified kernel session.
 
@@ -53,12 +71,11 @@ def execute_code(snippet: CodeSnippet) -> ExecuteResponse:
     )
 
 
-@app.post("/get_notebook/{session_id}")
 @mcp.tool(
     "get_notebook",
     description="Get notebook contents from a Jupyter kernel session",
 )
-def get_notebook(session_id: str) -> GetNotebookResponse:
+async def get_notebook(session_id: str) -> GetNotebookResponse:
     """
     Shut down an active kernel session and return its notebook contents.
 
@@ -75,9 +92,8 @@ def get_notebook(session_id: str) -> GetNotebookResponse:
     return GetNotebookResponse(notebook=notebook)
 
 
-@app.post("/shutdown/{session_id}")
 @mcp.tool("shutdown", description="Shut down a Jupyter kernel session")
-def shutdown_kernel(session_id: str) -> ShutdownResponse:
+async def shutdown_kernel(session_id: str) -> ShutdownResponse:
     """
     Shut down an active kernel session and return its notebook contents.
 
@@ -95,12 +111,11 @@ def shutdown_kernel(session_id: str) -> ShutdownResponse:
     )
 
 
-@app.post("/notebook-running/{session_id}")
 @mcp.resource(
     "notebook-running://{session_id}",
     description="Check if a Jupyter kernel session is running",
 )
-def notebook_running(session_id: str) -> bool:
+async def notebook_running(session_id: str) -> bool:
     """
     Show whether a notebook session is still running.
 
@@ -115,8 +130,3 @@ def notebook_running(session_id: str) -> bool:
         return True
     except SessionNotFoundError:
         return False
-
-
-@app.get("/")
-async def redirect_docs():
-    return RedirectResponse("/docs")

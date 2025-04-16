@@ -1,4 +1,7 @@
-import uvicorn
+from mcp_notebooks.app.api import mcp
 
 if __name__ == "__main__":
-    uvicorn.run("mcp_notebooks.app.api:app", host="0.0.0.0", port=8000, reload=True)
+    import dotenv
+
+    dotenv.load_dotenv()
+    mcp.run("sse")

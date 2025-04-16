@@ -80,7 +80,7 @@ recommended packages to add
 I've found the AI really tries to use the graphing packages when demonstrating things to your
 
 # TODO
-- kernel timeout (10 minutes? env var it)
+- View notebooks
 - Sandbox the environment more
 - Scheme a data ingestion scenario (Kedro catalog?)
 - Dependency injection (Or just let the user pull and build their own container)

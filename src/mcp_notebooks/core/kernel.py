@@ -6,6 +6,7 @@ import json
 from jupyter_client.manager import KernelManager
 from mcp_notebooks.models.schema import ExecuteResponse
 from mcp_notebooks.core.util import convert_message_to_output
+from datetime import datetime, UTC
 
 
 class KernelSession:
@@ -20,17 +21,23 @@ class KernelSession:
 
         self.nb_hist = {"cells": []}
         self.executions = 0
+        self.use_datetime = datetime.now(UTC)
 
-    def getID(self) -> str:
+    def is_active(self) -> bool:
         """
-        Get the kernel ID.
+        Test if the current kernel is still active.
         """
-        return self.km.kernel_id
+
+        time_delta = datetime.now(UTC) - self.use_datetime
+        if time_delta.total_seconds() > 60 * 10:
+            return False
+        return True
 
     def get_notebook(self) -> str:
         """
         Get the notebook history as a JSON string.
         """
+        self.use_datetime = datetime.now(UTC)
         return json.dumps(self.nb_hist, indent=2)
 
     def stop(self) -> str:
@@ -51,6 +58,7 @@ class KernelSession:
         }
 
         nb_string = json.dumps(nb, indent=2)
+        self.kc.stop_channels()
         self.km.shutdown_kernel(now=True)
 
         return nb_string
@@ -61,7 +69,7 @@ class KernelSession:
         The cell—including the code, nbformat-compliant outputs, and execution count—is appended to the
         notebook history.
         """
-
+        self.use_datetime = datetime.now(UTC)
         self.kc.execute(snippet)
         outputs = []
 

@@ -2,6 +2,10 @@ from uuid import uuid4
 from typing import Dict
 from mcp_notebooks.core.kernel import KernelSession
 from mcp_notebooks.core.exceptions import SessionNotFoundError, KernelCreationError
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SessionManager:
@@ -37,4 +41,26 @@ class SessionManager:
         session = self.sessions.get(session_id)
         if session is None:
             raise SessionNotFoundError(f"Session ID {session_id} not found.")
-        return session.stop()
+        nb_string = session.stop()
+        del self.sessions[session_id]
+        return nb_string
+
+    async def cleanup(self, force: bool = False) -> None:
+        while True:
+            to_delete = []
+
+            for session_id, session in self.sessions.items():
+                if session.is_active() and not force:
+                    pass
+                else:
+                    logger.warning(
+                        f"Session {session_id} is no longer active, deleting..."
+                    )
+                    to_delete.append(session_id)
+
+            for session_id in to_delete:
+                self.delete_session(session_id)
+
+            if force:
+                break
+            await asyncio.sleep(10)
