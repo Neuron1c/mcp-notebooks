@@ -21,4 +21,4 @@ USER jupyter
 
 EXPOSE 3001
 
-ENTRYPOINT ["poetry", "run", "python", "-m", "mcp_notebooks.mcp_server" ]
+ENTRYPOINT ["poetry", "run", "python", "-m", "mcp_notebooks.server" ]
