@@ -19,6 +19,7 @@ RUN poetry config virtualenvs.create false && \
 RUN chmod -R 555 /home/jupyter
 USER jupyter
 
+ENV FASTMCP_port=3001
 EXPOSE 3001
 
 ENTRYPOINT ["poetry", "run", "python", "-m", "mcp_notebooks.server" ]
