@@ -2,7 +2,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP, Context
 from mcp_notebooks.models.schema import (
     StartKernelResponse,
     CodeSnippet,
@@ -39,14 +39,14 @@ mcp = FastMCP(
 
 
 @mcp.tool("start", description="Start a new Jupyter kernel session")
-async def start_kernel() -> StartKernelResponse:
+async def start_kernel(ctx: Context) -> StartKernelResponse:
     """
     Start a new Jupyter kernel session.
 
     Returns:
         A unique session ID and a message indicating the session was successfully created.
     """
-
+    print(ctx.request_context)
     session_id = session_manager.create_session()
     return StartKernelResponse(session_id=session_id, message="success")
 

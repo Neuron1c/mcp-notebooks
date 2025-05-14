@@ -67,7 +67,7 @@ And now the config.json
 As it stands the project dependencies are scoped to the bare minimum of what's needed to run the server. To add more you need to install `poetry`, after you have fought with that (protip use `pipx`)
 
 ```bash
-poetry add your-package
+uv add your-package
 ```
 
 recommended packages to add 
@@ -84,4 +84,3 @@ I've found the AI really tries to use the graphing packages when demonstrating t
 - Sandbox the environment more
 - Scheme a data ingestion scenario (Kedro catalog?)
 - Dependency injection (Or just let the user pull and build their own container)
-- Switch to uv?

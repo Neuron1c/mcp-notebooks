@@ -8,12 +8,11 @@ RUN useradd -m jupyter && \
 WORKDIR /home/jupyter
 
 # Install Poetry and copy code
-RUN pip install --no-cache-dir poetry
+RUN pip install --no-cache-dir uv
 COPY . .
 
 # Install dependencies and the package itself
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi
+RUN uv sync
 
 # Change to restricted user **after** installing everything
 RUN chmod -R 555 /home/jupyter
@@ -22,4 +21,4 @@ USER jupyter
 ENV FASTMCP_port=3001
 EXPOSE 3001
 
-ENTRYPOINT ["poetry", "run", "python", "-m", "mcp_notebooks.server" ]
+ENTRYPOINT ["uv", "run", "--no-cache", "python", "-m", "mcp_notebooks.server" ]
